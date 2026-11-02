@@ -7,6 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     container: devkitpro/devkita64:latest
     steps:
+      - uses: actions/checkout@v4
       - name: Fetch pinned upstream
         run: |
           git clone https://github.com/KranKRival/BomberManNX.git source
@@ -38,6 +39,12 @@ jobs:
           f=p/"src/game_cleanup.cpp"
           s=f.read_text(); a=s.index("    for (int i"); b=s.index("    delete display_manager;",a)
           f.write_text(s[:a]+"    for (int i = 0; i < SDL_NumJoysticks(); ++i) {\n        SDL_Joystick* joy = SDL_JoystickFromInstanceID(SDL_JoystickGetDeviceInstanceID(i));\n        if (joy) SDL_JoystickClose(joy);\n    }\n"+s[b:])
+      - name: Apply Chinese and gameplay customization
+        run: python3 tools/customize.py source
+      - name: Add open-license Chinese font
+        run: |
+          curl -fL --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf' -o source/resources/NotoSansSC.ttf
+          curl -fL --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/OFL.txt' -o source/resources/NotoSansSC-OFL.txt
       - name: Install SDL dependencies
         run: dkp-pacman -Q switch-sdl2 switch-sdl2_mixer switch-sdl2_ttf
       - name: Build NRO
@@ -64,20 +71,3 @@ jobs:
             source/resources
             source/LICENSE
             source/icon.jpg
-
-  packaging-tool:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Windows cross compiler
-        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
-      - name: Build open-source packaging tool
-        run: |
-          git clone https://github.com/rlaphoenix/hacBrewPack.git tool
-          cd tool
-          git checkout 745b16ecfc9ce055743067d200572204cb2aac6c
-          x86_64-w64-mingw32-gcc -O2 -std=gnu11 -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64 -I mbedtls/include *.c mbedtls/library/*.c -static -lws2_32 -lwinpthread -o hacbrewpack.exe
-      - uses: actions/upload-artifact@v4
-        with:
-          name: hacbrewpack-from-source
-          path: tool/hacbrewpack.exe
-          if-no-files-found: error
