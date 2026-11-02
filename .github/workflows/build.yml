@@ -22,8 +22,9 @@ jobs:
           s=s.replace("CXXFLAGS\t:= $(CFLAGS) -fno-rtti -fexceptions","CXXFLAGS\t:= $(CFLAGS) -std=c++17 -fno-rtti -fexceptions")
           a=s.index("LIBS\t:="); b=s.index("\n#----",a)
           f.write_text(s[:a]+"LIBS := $(shell $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-pkg-config --libs SDL2_ttf SDL2_mixer)\n"+s[b:])
-          f=p/"include/Manager/PlayerManager.h"
-          f.write_text("#include <string>\n"+f.read_text())
+          for header in (p/"include").rglob("*.h"):
+              if "std::string" in header.read_text() and "#include <string>" not in header.read_text():
+                  header.write_text("#include <string>\n"+header.read_text())
           f=p/"include/Constants/ResourcesConstants.h"
           f.write_text(f.read_text().replace('"resources/"','"romfs:/"').replace('"resources/levels/"','"romfs:/levels/"'))
           f=p/"src/includes.h"
