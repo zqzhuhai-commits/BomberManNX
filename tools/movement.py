@@ -68,3 +68,11 @@ f=p/"src/Display/GameDisplay.cpp";s=f.read_text(encoding="utf-8")
 s=s.replace(">=200000",">=300000").replace("elapsed>=200?0:200-elapsed","elapsed>=300?0:300-elapsed")
 f.write_text(s,encoding="utf-8")
 f=p/"Makefile";s=f.read_text(encoding="utf-8").replace("VERSION_MINOR := 2","VERSION_MINOR := 3");f.write_text(s,encoding="utf-8")
+
+# Keep the Chinese HUD font open; reopening a 17MB font every second causes stalls.
+f=p/"include/Display/GameDisplay.h";s=f.read_text(encoding="utf-8").replace("#include <string>",'#include <string>\n#include "System/TextRenderer.h"').replace("        mutable std::string m_hud_text;","        mutable std::string m_hud_text;\n        mutable TextRenderer* m_hud_font=nullptr;");f.write_text(s,encoding="utf-8")
+f=p/"src/Display/GameDisplay.cpp";s=f.read_text(encoding="utf-8")
+s=s.replace("        TextRenderer font(RESOURCES_BASE_PATH+RESOURCES_FONT,24);\n        m_hud=font.RenderText","        if(!m_hud_font) m_hud_font=new TextRenderer(RESOURCES_BASE_PATH+RESOURCES_FONT,24);\n        m_hud=m_hud_font->RenderText")
+s=s.replace("    if(m_hud) { SDL_DestroyTexture(m_hud); m_hud=nullptr; }","    if(m_hud) { SDL_DestroyTexture(m_hud); m_hud=nullptr; }\n    delete m_hud_font; m_hud_font=nullptr;")
+s=s.replace("GameDisplay::~GameDisplay()\n{","GameDisplay::~GameDisplay()\n{\n    if(m_hud) SDL_DestroyTexture(m_hud);\n    delete m_hud_font;")
+f.write_text(s,encoding="utf-8")
