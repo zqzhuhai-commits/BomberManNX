@@ -41,11 +41,17 @@ jobs:
       - name: Install SDL dependencies
         run: dkp-pacman -Q switch-sdl2 switch-sdl2_mixer switch-sdl2_ttf
       - name: Build NRO
-        run: make -C source -j2
+        run: |
+          make -C source -j2
+          elf2nso source/BomberManNX.elf source/main
       - uses: actions/upload-artifact@v4
         with:
           name: BomberManNX-Switch
-          path: source/BomberManNX.nro
+          path: |
+            source/BomberManNX.nro
+            source/main
+            source/BomberManNX.nacp
+            source/icon.jpg
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
