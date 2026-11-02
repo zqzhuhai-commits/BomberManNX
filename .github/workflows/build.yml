@@ -39,7 +39,7 @@ jobs:
           s=f.read_text(); a=s.index("    for (int i"); b=s.index("    delete display_manager;",a)
           f.write_text(s[:a]+"    for (int i = 0; i < SDL_NumJoysticks(); ++i) {\n        SDL_Joystick* joy = SDL_JoystickFromInstanceID(SDL_JoystickGetDeviceInstanceID(i));\n        if (joy) SDL_JoystickClose(joy);\n    }\n"+s[b:])
       - name: Install SDL dependencies
-        run: dkp-pacman -Syu --noconfirm --needed switch-sdl2 switch-sdl2_mixer switch-sdl2_ttf
+        run: dkp-pacman -Q switch-sdl2 switch-sdl2_mixer switch-sdl2_ttf
       - name: Build NRO
         run: make -C source -j2
       - uses: actions/upload-artifact@v4
