@@ -1,0 +1,57 @@
+name: Build Switch
+on: [push, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+    steps:
+      - name: Fetch pinned upstream
+        run: |
+          git clone https://github.com/KranKRival/BomberManNX.git source
+          cd source
+          git checkout 919ec1b0878ddf7fe9f5baecdc0f3a6b71892821
+      - name: Apply Switch fixes
+        shell: python3 {0}
+        run: |
+          from pathlib import Path
+          p=Path("source")
+          f=p/"Makefile"
+          s=f.read_text().replace("#ROMFS\t:=\tromfs","ROMFS\t:=\tresources").replace(" -std=c++17","")
+          s=s.replace("CXXFLAGS\t:= $(CFLAGS) -fno-rtti -fexceptions","CXXFLAGS\t:= $(CFLAGS) -std=c++17 -fno-rtti -fexceptions")
+          a=s.index("LIBS\t:="); b=s.index("\n#----",a)
+          f.write_text(s[:a]+"LIBS := $(shell aarch64-none-elf-pkg-config --libs SDL2_ttf SDL2_mixer)\n"+s[b:])
+          f=p/"include/Constants/ResourcesConstants.h"
+          f.write_text(f.read_text().replace('"resources/"','"romfs:/"').replace('"resources/levels/"','"romfs:/levels/"'))
+          f=p/"src/includes.h"
+          f.write_text(f.read_text().replace("#include <SDL2/SDL_image.h>","").replace("#include<SDL2/SDL_image.h>",""))
+          f=p/"src/main.cpp"
+          s=f.read_text().replace('#include "game.h"','#include "game.h"\n#include <switch.h>').replace("while(Running)","while(Running && appletMainLoop())")
+          a=s.index("    for (int i = 0; i < 2; i++)",s.index("int main"))
+          f.write_text(s[:a]+'    if (R_FAILED(romfsInit())) return 1;\n    game theGame;\n    int result = theGame.OnExecute();\n    romfsExit();\n    return result;\n}\n')
+          f=p/"src/game_oninit.cpp"
+          f.write_text(f.read_text().replace("    int result = 0;","    for (int i = 0; i < SDL_NumJoysticks(); ++i) SDL_JoystickOpen(i);\n    int result = 0;").replace("return 1;","return false;"))
+          f=p/"src/game_cleanup.cpp"
+          s=f.read_text(); a=s.index("    for (int i"); b=s.index("    delete display_manager;",a)
+          f.write_text(s[:a]+"    for (int i = 0; i < SDL_NumJoysticks(); ++i) {\n        SDL_Joystick* joy = SDL_JoystickFromInstanceID(SDL_JoystickGetDeviceInstanceID(i));\n        if (joy) SDL_JoystickClose(joy);\n    }\n"+s[b:])
+      - name: Install SDL dependencies
+        run: dkp-pacman -Syu --noconfirm --needed switch-sdl2 switch-sdl2_mixer switch-sdl2_ttf
+      - name: Build NRO
+        run: make -C source -j2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BomberManNX-Switch
+          path: source/BomberManNX.nro
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: BomberManNX-source
+          path: |
+            source/Makefile
+            source/src
+            source/include
+            source/resources
+            source/LICENSE
+            source/icon.jpg
