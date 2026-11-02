@@ -40,7 +40,9 @@ jobs:
           s=f.read_text(); a=s.index("    for (int i"); b=s.index("    delete display_manager;",a)
           f.write_text(s[:a]+"    for (int i = 0; i < SDL_NumJoysticks(); ++i) {\n        SDL_Joystick* joy = SDL_JoystickFromInstanceID(SDL_JoystickGetDeviceInstanceID(i));\n        if (joy) SDL_JoystickClose(joy);\n    }\n"+s[b:])
       - name: Apply Chinese and gameplay customization
-        run: python3 tools/customize.py source
+        run: |
+          python3 tools/customize.py source
+          python3 tools/classic.py source
       - name: Add open-license Chinese font
         run: |
           curl -fL --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf' -o source/resources/NotoSansSC.ttf
@@ -71,3 +73,12 @@ jobs:
             source/resources
             source/LICENSE
             source/icon.jpg
+
+  rules-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test classic gameplay rules
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror tests/classic.cpp -o /tmp/classic-tests
+          /tmp/classic-tests
