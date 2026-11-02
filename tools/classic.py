@@ -71,7 +71,7 @@ change("src/Entity/PickUp.cpp","    SDL_Rect SrcR, DestR;","""    if (m_type == 
     SDL_Rect SrcR, DestR;""")
 # Four-way blast tiles, walls stop rays; persistent flames hurt on contact.
 change("include/Entity/Bomb.h","    protected:","        void Ignite() { m_explode=true; }\n    protected:")
-change("include/Manager/BombManager.h","#include <list>","#include <list>\n#include <vector>\n#include \\"Utility/ClassicRules.h\\"".replace('\\"','"'))
+change("include/Manager/BombManager.h","#include <list>","#include <list>\n#include <vector>\n#include \"Utility/ClassicRules.h\"".replace('\"','"'))
 change("include/Manager/BombManager.h","    protected:","        void DetonatePlayer(unsigned id);\n    protected:")
 change("include/Manager/BombManager.h","        std::list<Bomb*>        m_bombs;","        std::list<Bomb*>        m_bombs;\n        struct Flame { unsigned x,y; Timer timer; };\n        std::vector<Flame> m_flames;")
 f=p/"src/Manager/BombManager.cpp"; s=f.read_text(encoding="utf-8").replace('#include "Manager/BombManager.h"','#include "Manager/BombManager.h"\n#include "Manager/Map.h"\n#include <algorithm>')
@@ -165,7 +165,7 @@ s=s[:pos]+s[pos:].replace('sstm << "关卡 " << m_current_level;','sstm << "过�
 # Smaller transition label to fit screen.
 s=s.replace("TextRenderer text_renderer(path_font,96)","TextRenderer text_renderer(path_font,48)")
 f.write_text(s,encoding="utf-8")
-change("include/Display/GameDisplay.h","#define GAMEDISPLAY_H","#define GAMEDISPLAY_H\n#include <string>\n#include \\"Utility/Timer.h\\"".replace('\\"','"'))
+change("include/Display/GameDisplay.h","#define GAMEDISPLAY_H","#define GAMEDISPLAY_H\n#include <string>\n#include \"Utility/Timer.h\"".replace('\"','"'))
 change("include/Display/GameDisplay.h","        Mix_Music*                      m_music;","        Mix_Music*                      m_music;\n        Timer m_stage_timer;\n        bool m_timeout_spawned=false;\n        mutable SDL_Texture* m_hud=nullptr;\n        mutable std::string m_hud_text;")
 f=p/"src/Display/GameDisplay.cpp"; s=f.read_text(encoding="utf-8").replace('#include "Display/GameDisplay.h"','#include "Display/GameDisplay.h"\n#include "Utility/ClassicRules.h"\n#include "System/TextRenderer.h"\n#include <algorithm>')
 s=s.replace("    Mix_PlayMusic(m_music, -1);","    m_stage_timer.ResetTimer();\n    Mix_PlayMusic(m_music, -1);")
@@ -203,3 +203,5 @@ hud='''
 s=s[:end]+hud+s[end:]; f.write_text(s,encoding="utf-8")
 # Disabled two-player mode must not route into an unsupported keyboard-only player.
 change("src/Display/PlayersNumberDisplay.cpp","m_players_selected = 2;","m_players_selected = 1;")
+
+change("Makefile","VERSION_MINOR := 1","VERSION_MINOR := 2")
