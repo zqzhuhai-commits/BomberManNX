@@ -64,3 +64,20 @@ jobs:
             source/resources
             source/LICENSE
             source/icon.jpg
+
+  packaging-tool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Windows cross compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
+      - name: Build open-source packaging tool
+        run: |
+          git clone https://github.com/rlaphoenix/hacBrewPack.git tool
+          cd tool
+          git checkout 745b16ecfc9ce055743067d200572204cb2aac6c
+          x86_64-w64-mingw32-gcc -O2 -std=gnu11 -D_DEFAULT_SOURCE -D__USE_MINGW_ANSI_STDIO=1 -D_FILE_OFFSET_BITS=64 -I mbedtls/include *.c mbedtls/library/*.c -static -lws2_32 -lwinpthread -o hacbrewpack.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hacbrewpack-from-source
+          path: tool/hacbrewpack.exe
+          if-no-files-found: error
