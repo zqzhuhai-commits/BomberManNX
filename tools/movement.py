@@ -3,7 +3,7 @@ import sys
 p=Path(sys.argv[1])
 (p/"include/Utility/Movement.h").write_text(Path("tools/Movement.h").read_text(encoding="utf-8"),encoding="utf-8")
 f=p/"include/Entity/Player.h";s=f.read_text(encoding="utf-8")
-s=s.replace("        Timer          m_timer;","        Timer          m_timer;\n        Timer m_animation_timer;\n        double m_movement_carry=0.0;")
+s=s.replace("        Timer          m_timer;","        Timer          m_timer;\n        Timer m_animation_timer;\n        double m_movement_carry=0.0;\n        bool m_continue_motion=false;")
 f.write_text(s,encoding="utf-8")
 f=p/"src/Entity/Player.cpp";s=f.read_text(encoding="utf-8")
 s=s.replace('#include "Entity/Player.h"','#include "Entity/Player.h"\n#include "Utility/Movement.h"')
@@ -19,17 +19,18 @@ s=s[:a]+'''    unsigned long elapsed=m_timer.GetTimeElapsed();
         int pixels=Movement::Pixels(m_movement_carry,elapsed,m_move_speed*2000.0/m_speed);
         for(int i=0;i<pixels;++i) PlayerMove(dx,dy);
     } else {
-        m_movement_carry=0; m_status=0; m_animation_timer.ResetTimer();
+        m_movement_carry=0; m_status=0; m_continue_motion=false; m_animation_timer.ResetTimer();
     }
 '''+s[b:]
 a=s.index("void Player::PlayerMove(int x, int y)");b=s.index("unsigned int Player::GetX()",a)
 s=s[:a]+'''void Player::PlayerMove(int dx,int dy) {
-    const int oldDx=m_direction==LEFT?-1:m_direction==RIGHT?1:0;
-    const int oldDy=m_direction==UP?-1:m_direction==DOWN?1:0;
+    const int oldDx=m_continue_motion?(m_direction==LEFT?-1:m_direction==RIGHT?1:0):dx;
+    const int oldDy=m_continue_motion?(m_direction==UP?-1:m_direction==DOWN?1:0):dy;
     int x=static_cast<int>(m_x),y=static_cast<int>(m_y);
     int beforeX=x,beforeY=y;
     bool moved=Movement::Step(x,y,dx,dy,oldDx,oldDy,m_tile_size,m_player_size_w,m_player_size_h,
         [this](int row,int col){return m_relay->GetMap()->Walkable(row,col);});
+    m_continue_motion=moved;
     if(moved) {
         m_x=x;m_y=y;
         // Face the actual forward movement, keeping correction pixels from
