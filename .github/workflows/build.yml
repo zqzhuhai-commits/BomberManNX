@@ -43,6 +43,7 @@ jobs:
         run: |
           python3 tools/customize.py source
           python3 tools/classic.py source
+          python3 tools/movement.py source
       - name: Add open-license Chinese font
         run: |
           curl -fL --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf' -o source/resources/NotoSansSC.ttf
@@ -82,3 +83,5 @@ jobs:
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror tests/classic.cpp -o /tmp/classic-tests
           /tmp/classic-tests
+          g++ -std=c++17 -Wall -Wextra -Werror tests/movement.cpp -o /tmp/movement-tests
+          /tmp/movement-tests
